@@ -7,6 +7,7 @@ This docker image allows you to run a server for FiveM, a modded GTA multiplayer
 This image includes [txAdmin](https://github.com/tabarra/txAdmin), an in-browser server management software.
 Upon first run, the configuration is generated in the host mount for the `/config` directory, and for the `/txData` directory (that contains the txAdmin configuration).
 This bundle is made with a inbuild Mariadb server.
+There is also a tag so you can use this without inbuild database. Light version.
 
 [dockerhub]: https://hub.docker.com/r/henkallsn/fivem_esx_bundle
 [github]: https://github.com/henkall/fivem
@@ -19,71 +20,58 @@ This bundle is made with a inbuild Mariadb server.
 ## Licence Key
 
 A freely obtained licence key is required to use this server, which should be declared as `FIVEM_LICENCE_KEY`. A tutorial on how to obtain a licence key can be found [here](https://forum.fivem.net/t/explained-how-to-make-add-a-server-key/56120)
+## Usage of light tag
 
-## Usage
-
-Use the docker-compose script as provided:
+Use this docker-compose script for the light version:
 
 ```sh
----
+---	  
 version: '2'
 services:
 # -------------------------------------------------------------------
-  fivem:
-    image: henkallsn/fivem_esx_bundle
+  fivem01:
+    image: henkallsn/fivem_esx_bundle:light
     stdin_open: true
     tty: true
     volumes:
       # Remember to change.
-      - "/path/to/resources/folder:/config"
-      # Remember to change.
-      - "/path/to/txAdmin/config:/txData"
-      # Remember to change. Do not place this on a ZFS.
-      - "/path/to/mysql/data:/var/lib/mysql"
+      - /path/to/AppData/FiveMESXlight/txData:/txData
     ports:
-      - "30120:30120"
-      - "30120:30120/udp"
-      - "40120:40120"
+      - 30120:30120
+      - 30120:30120/udp
+      - 40120:40120
     environment:
-      SERVER_PROFILE: "default"
+      SERVER_PROFILE: default
       FIVEM_PORT: 30120
-      TXADMIN_PORT: 40120
+      WEB_PORT: 40120
       HOST_UID: 1000
       HOST_GID: 100
       # Remember to change.
-      FIVEM_HOSTNAME: hostname-to-fivem-gameserver
+      FIVEM_HOSTNAME: FiveMESX-Server
+    depends_on:
+      - mariadb
+# -------------------------------------------------------------------
+  mariadb:
+    image: mariadb
+    volumes:
       # Remember to change.
-      FIVEM_LICENCE_KEY: license-key-here
+      - /path/to/AppData/FiveMESXlight/mysql:/var/lib/mysql
+    environment:
       # Remember to change.
-      STEAM_WEBAPIKEY: api-key-herer
-      # Database stuff ---------------
-      DATABASE_SERVICE_NAME: fivem
-      MYSQL_DATABASE: FiveMESX
-      MYSQL_USER: database username
-      MYSQL_PASSWORD: database password
-      MYSQL_RANDOM_ROOT_PASSWORD: 1
-      # Change to your timezone
-      TZ: Europe/Copenhagen
+      MYSQL_ROOT_PASSWORD: password
 # -------------------------------------------------------------------
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     ports:
       - 8100-8105:80
     environment:
-      - PMA_HOST=fivem
+      PMA_HOST: mariadb
     depends_on:
-      - fivem
+      - mariadb
 # -------------------------------------------------------------------
 ```
+OBS: When using the light version and the txadmin ask for database then you can just write mariadb in stead of localhost in the config.
 
-_It is important that you use `interactive` and `pseudo-tty` options otherwise the container will crash on startup_
-See [issue #3](https://github.com/spritsail/fivem/issues/3)
-
-## Important Tags
-| **Tag name** | **Description** |
-|---|---|
-|latest| This tag is used by default. Makes the database use innodb engine.|
-|zfs| This tag has to be added. This makes the database able to run on a system with zfs. Using myisam engine.|
 
 ### Environment Varibles
 
